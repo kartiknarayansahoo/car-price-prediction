@@ -46,7 +46,10 @@ if rad == "Home":
         elif reg_name == 'Decision Tree Regression':
             reg = DecisionTreeRegressor()
         elif reg_name == 'SVR(Support Vector Regression)':
-            reg = SVR()
+            ker = st.selectbox('Select the kernel', [
+                               'poly', 'rbf', 'sigmoid'], 1)
+            print(ker)
+            reg = SVR(kernel=ker)
         elif reg_name == 'Random Forest Regression':
             esti = st.slider('Select the number of estimators',
                              min_value=100, max_value=500, value=100)
@@ -56,7 +59,9 @@ if rad == "Home":
     # Modelling
     st.header("Modelling")
     select_reg = st.selectbox('Select regressor',
-                              ['Linear Regression', 'SVR(Support Vector Regression)', 'Decision Tree Regression', 'Random Forest Regression'])
+                              ['Linear Regression', 'SVR(Support Vector Regression)',
+                               'Decision Tree Regression', 'Random Forest Regression'],
+                              3)
 
     st.subheader('Set the parameter')
     split_ratio = st.slider(
@@ -91,12 +96,14 @@ if rad == "Home":
         # feature scaling
         sc_x = StandardScaler()
         sc_y = StandardScaler()
-        x_train[:, 18:-1] = sc_x.fit_transform(x_train[:, 18:-1])
+        x_train[:, 14:-1] = sc_x.fit_transform(x_train[:, 14:-1])
         y_train = sc_y.fit_transform(y_train.reshape(len(y_train), 1))
 
         regressor.fit(x_train, y_train.ravel())
-        y_pred_test = sc_y.inverse_transform(
-            regressor.predict(sc_x.transform(x_test)))
+
+        x_test[:, 14:-1] = sc_x.transform(x_test[:, 14:-1])
+
+        y_pred_test = sc_y.inverse_transform(regressor.predict(x_test))
         y_pred_train = sc_y.inverse_transform(
             regressor.predict(x_train))
         y_train = sc_y.inverse_transform(y_train)
