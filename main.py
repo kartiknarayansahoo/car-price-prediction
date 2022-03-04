@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
@@ -19,14 +18,15 @@ st.write("""
 """)
 
 df = pd.read_csv('data.csv')
+st.sidebar.title('Navigation')
 rad = st.sidebar.radio(
-    'Navigation', ["Home", "Dataset (after cleaning)", "Predictor"])
+    '', ["Home", "Dataset (after cleaning)", "Predictor"])
 
 st.write(f"## {rad} ")
 if rad == "Home":
     st.write("""
     In this project we will be analyzing the [dataset taken from kaggle](https://www.kaggle.com/nehalbirla/vehicle-dataset-from-cardekho) and predict the selling price of a car,
-    by creating a random forest regression model.
+    by creating various regression model like mulitple linear regression, SVR, decision tree regression and random forest regression.
     """)
 
     st.header("Correlation between different variables")
@@ -41,7 +41,7 @@ if rad == "Home":
 
     def reg_select(reg_name):
         reg = None
-        if reg_name == 'Linear Regression':
+        if reg_name == 'Multiple Linear Regression':
             reg = LinearRegression()
         elif reg_name == 'Decision Tree Regression':
             reg = DecisionTreeRegressor()
@@ -58,8 +58,9 @@ if rad == "Home":
 
     # Modelling
     st.header("Modelling")
+    st.subheader('Select the regression model')
     select_reg = st.selectbox('Select regressor',
-                              ['Linear Regression', 'SVR(Support Vector Regression)',
+                              ['Multiple Linear Regression', 'SVR(Support Vector Regression)',
                                'Decision Tree Regression', 'Random Forest Regression'],
                               3)
 
