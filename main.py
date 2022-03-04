@@ -17,16 +17,18 @@ st.write("""
 # Car Price Prediction
 """)
 
-df = pd.read_csv('data.csv')
+df = pd.read_csv('data_cleaned.csv')
 st.sidebar.title('Navigation')
 rad = st.sidebar.radio(
-    '', ["Home", "Dataset (after cleaning)", "Predictor"])
+    '', ["Home", "Dataset (after cleaning)"])
 
 st.write(f"## {rad} ")
 if rad == "Home":
     st.write("""
-    In this project we will be analyzing the [dataset taken from kaggle](https://www.kaggle.com/nehalbirla/vehicle-dataset-from-cardekho) and predict the selling price of a car,
-    by creating various regression model like mulitple linear regression, SVR, decision tree regression and random forest regression.
+    In this project we will be analyzing the [dataset taken from kaggle](https://www.kaggle.com/nehalbirla/vehicle-dataset-from-cardekho) and predict the selling price of a car, 
+    as a function of their input parameters (year of manufacture, km_driven, fuel, seller_type, transmission, number of ownership, seats, torque_rpm, mileage, engine_cc and max_power_bhp).
+    
+    We will create various regression model like mulitple linear regression, SVR, decision tree regression and random forest regression.
     """)
 
     st.header("Correlation between different variables")
@@ -69,7 +71,7 @@ if rad == "Home":
         f'Data split ratio (% for Training Set)', min_value=10, max_value=90, step=10, value=80)/100
     # # Importing the dataset
 
-    data = pd.read_csv('data.csv')
+    data = pd.read_csv('data_cleaned.csv')
     data.head()
 
     x = data.iloc[:, 1:-1].values
@@ -247,6 +249,3 @@ data_new['selling_price'] = df
 data_new.to_csv('data.csv', index=False)
     """
     st.code(code, language='python')
-
-if rad == "Predictor":
-    pass
