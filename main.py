@@ -1,5 +1,9 @@
-from sklearn.metrics import r2_score
+from multiprocessing.sharedctypes import Value
+from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
@@ -34,113 +38,140 @@ if rad == "Home":
     a moderate correlation of **selling price** with **engine_cc**.
     """)
 
-    # random forest regression
-    st.header("Random Forest Regression")
+    def reg_select(reg_name):
+        reg = None
+        if reg_name == 'Linear Regression':
+            reg = LinearRegression()
+        elif reg_name == 'Decision Tree Regression':
+            reg = DecisionTreeRegressor()
+        elif reg_name == 'Random Forest Regression':
+            reg = RandomForestRegressor(n_estimators=100)
+        return reg
+
+    # Modelling
+    st.header("Modelling")
+    select_reg = st.selectbox('Select regressor',
+                              ['Linear Regression', 'Decision Tree Regression', 'Random Forest Regression'])
+
+    st.subheader('Set the parameter')
+    split_ratio = st.slider(
+        f'Data split ratio (% for Training Set)', min_value=10, max_value=90, step=10, value=80)/100
     # # Importing the dataset
 
-data = pd.read_csv('data.csv')
-data.head()
+    data = pd.read_csv('data.csv')
+    data.head()
 
-x = data.iloc[:, 1:-1].values
-y = data.iloc[:, -1].values
+    x = data.iloc[:, 1:-1].values
+    y = data.iloc[:, -1].values
 
-# # Encoding categorical variables
+    # # Encoding categorical variables
 
+    ct = ColumnTransformer(transformers=[('encoder', OneHotEncoder(), [
+        2, 3, 4, 5])], remainder='passthrough')
+    x = np.array(ct.fit_transform(x))
 
-ct = ColumnTransformer(transformers=[('encoder', OneHotEncoder(), [
-                       2, 3, 4, 5])], remainder='passthrough')
-x = np.array(ct.fit_transform(x))
+    print(x[:2])
+    print(y[:2])
 
-print(x[:2])
-print(y[:2])
+    # # Splitting the dataset into training and test set
 
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, train_size=split_ratio, random_state=0)
 
-# # Splitting the dataset into training and test set
+    # # Training the random forest regression model on the training set
 
-x_train, x_test, y_train, y_test = train_test_split(
-    x, y, train_size=0.9, random_state=0)
+    regressor = reg_select(select_reg)
+    regressor.fit(x_train, y_train)
 
+    # # Predicting the test set values
 
-# # Training the random forest regression model on the training set
+    y_pred_test = regressor.predict(x_test)
+    y_pred_train = regressor.predict(x_train)
 
-regressor = RandomForestRegressor(n_estimators=100, random_state=0)
-regressor.fit(x_train, y_train)
+    # # Evaluating the model performance
 
+    r2_test = r2_score(y_test, y_pred_test)
+    r2_train = r2_score(y_train, y_pred_train)
 
-# # Predicting the test set values
+    st.write(f'**Shape of dataset**')
+    st.info(data.shape)
 
-predictions = regressor.predict(x_test)
+    st.subheader('**Training set**')
+    st.write(f'**$R^2$(coefficient of determination)**')
+    st.info(r2_train)
+    st.write('**Error (MSE)**')
+    st.info(mean_squared_error(y_train, y_pred_train))
 
-# # Evaluating the model performance
+    st.subheader('**Test set**')
+    st.write(f'**$R^2$(coefficient of determination)**')
+    st.info(r2_test)
+    st.write('**Error (MSE)**')
+    st.info(mean_squared_error(y_test, y_pred_test))
 
-r2 = r2_score(y_test, predictions)
+    # st.subheader('Code')
+    code_reg = """
+    # # Importing the libraries
 
-st.write(f'Shape of dataset =', data.shape)
-st.write(f'R^2 =', r2)
-st.subheader('Code')
-code_reg = """
-# # Importing the libraries
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-
-# # Importing the dataset
-
-data = pd.read_csv('data.csv')
-data.head()
-
-x = data.iloc[:,1:-1].values
-y = data.iloc[:,-1].values
-
-
-# # Correlation between different variables
-
-plt.figure(figsize=(8,8))
-sns.heatmap(data.corr(),annot=True,cmap='mako',linewidths=.5)
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
 
 
-# # Encoding categorical variables
+    # # Importing the dataset
 
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
+    data = pd.read_csv('data.csv')
+    data.head()
 
-ct = ColumnTransformer(transformers=[('encoder', OneHotEncoder(),[2,3,4,5])], remainder='passthrough')
-x = np.array(ct.fit_transform(x))
-
-print(x[:2])
-print(y[:2])
+    x = data.iloc[:,1:-1].values
+    y = data.iloc[:,-1].values
 
 
-# # Splitting the dataset into training and test set
+    # # Correlation between different variables
 
-from sklearn.model_selection import train_test_split
-x_train, x_test, y_train, y_test = train_test_split(x,y, train_size=0.9, random_state=0)
-
-
-# # Training the random forest regression model on the training set
-
-from sklearn.ensemble import RandomForestRegressor
-regressor = RandomForestRegressor(n_estimators=100, random_state=0)
-regressor.fit(x_train, y_train)
+    plt.figure(figsize=(8,8))
+    sns.heatmap(data.corr(),annot=True,cmap='mako',linewidths=.5)
 
 
-# # Predicting the test set values
+    # # Encoding categorical variables
 
-predictions = regressor.predict(x_test)
+    from sklearn.compose import ColumnTransformer
+    from sklearn.preprocessing import OneHotEncoder
 
-np.set_printoptions(precision= 2)
-np.concatenate((y_test.reshape(len(y_test),1), predictions.reshape(len(predictions),1)),1)
+    ct = ColumnTransformer(transformers=[('encoder', OneHotEncoder(),[2,3,4,5])], remainder='passthrough')
+    x = np.array(ct.fit_transform(x))
+
+    print(x[:2])
+    print(y[:2])
 
 
-# # Evaluating the model performance
+    # # Splitting the dataset into training and test set
 
-from sklearn.metrics import r2_score
-r2_score(y_test, predictions)
-"""
-st.code(code_reg, language='python')
+    from sklearn.model_selection import train_test_split
+    x_train, x_test, y_train, y_test = train_test_split(x,y, train_size=0.9, random_state=0)
+
+
+    # # Training the random forest regression model on the training set
+
+    from sklearn.ensemble import RandomForestRegressor
+    regressor = RandomForestRegressor(n_estimators=100, random_state=0)
+    regressor.fit(x_train, y_train)
+
+
+    # # Predicting the test set values
+
+    predictions = regressor.predict(x_test)
+
+    np.set_printoptions(precision= 2)
+    np.concatenate((y_test.reshape(len(y_test),1), predictions.reshape(len(predictions),1)),1)
+
+
+    # # Evaluating the model performance
+
+    from sklearn.metrics import r2_score
+    r2_score(y_test, predictions)
+    """
+    # st.code(code_reg, language='python')
 
 if rad == "Dataset (after cleaning)":
     st.write("""
